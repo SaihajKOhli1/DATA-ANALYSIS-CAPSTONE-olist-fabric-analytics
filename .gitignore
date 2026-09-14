@@ -1,0 +1,4 @@
+__pycache__/
+*.pyc
+rag/vector_store.pkl
+.env
