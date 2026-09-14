@@ -1,4 +1,4 @@
-# Olist E-Commerce Analytics
+# 🛒 Olist E-Commerce Analytics
 
 An end-to-end analytics stack built on the [Olist Brazilian e-commerce
 dataset](https://www.kaggle.com/datasets/olistbr/brazilian-ecommerce): a
@@ -6,13 +6,25 @@ lakehouse ETL pipeline, a Power BI report, and a Claude-powered RAG
 assistant that can answer questions about the business.
 
 This is a **portfolio project**, built to demonstrate a modern data stack
-(lakehouse + BI + a conversational data assistant) end to end, including
+(lakehouse + BI + a conversational data assistant) end to end — including
 what it looks like to adapt a plan mid-project when the original
 infrastructure choice turns out to be blocked.
 
+## Contents
+
+- [🏗️ Architecture](#architecture)
+- [🧰 Tech Stack](#tech-stack)
+- [🧱 What's Built: ETL Pipeline](#whats-built-etl-pipeline)
+- [📊 Power BI Report](#power-bi-report)
+- [🤖 RAG Assistant](#rag-assistant)
+- [📁 Repo Structure](#repo-structure)
+- [🚀 Getting Started](#getting-started)
+- [💡 Example Questions This Project Can Answer](#example-questions-this-project-can-answer)
+- [⚠️ Pivots & Lessons Learned](#pivots--lessons-learned)
+
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```mermaid
 flowchart LR
@@ -59,7 +71,7 @@ Raw CSVs
 
 ---
 
-## Tech stack
+## 🧰 Tech Stack
 
 | Layer | Tool |
 |---|---|
@@ -70,39 +82,9 @@ Raw CSVs
 | Conversational assistant | Claude API + a local TF-IDF vector store (RAG) |
 | Docs | This README, Mermaid architecture diagram |
 
-### Two infrastructure pivots
-
-This project didn't go exactly as planned — and that's worth documenting
-honestly rather than glossing over:
-
-**Microsoft Fabric → Databricks Free Edition.** The original plan used
-Microsoft Fabric for the lakehouse layer. Workspace creation was blocked by
-a tenant-level restriction on the Microsoft account available for this
-project. Rather than wait on IT approval outside the project's control,
-the platform was swapped for Databricks Free Edition + Unity Catalog,
-which offers an equivalent medallion-architecture Delta Lake setup with no
-tenant dependency.
-
-**Copilot Studio agent → folded into the Claude RAG assistant.** The
-original plan included a Microsoft Copilot Studio agent connected to the
-Power BI semantic model as the "conversational agent" deliverable.
-Connecting it hit a second tenant-level licensing block: the Power BI
-knowledge-source connector never appeared in the agent's knowledge-source
-list, and the file-upload fallback failed with "User license not found."
-Rather than lose that deliverable, its scope — answering business-metrics
-questions grounded in the data — was folded into a Claude API + RAG
-assistant instead, which also picked up data-dictionary Q&A as a second
-capability. See `specs/04-copilot-studio-agent.md` for the full account.
-
-Both pivots are the kind of infrastructure constraint a real project runs
-into — the point of documenting them here is the adaptation, not treating
-them as failures.
-
 ---
 
-## What's built
-
-### Bronze → silver → gold ETL
+## 🧱 What's Built: ETL Pipeline
 
 All 9 raw Olist CSVs are loaded into `olist_ecommerce.bronze`, then
 transformed through `olist_ecommerce.silver` into 4 gold-layer fact tables
@@ -127,25 +109,50 @@ Key data-quality decisions made along the way:
   to 19,015 rows — one per `geolocation_zip_code_prefix` — using average
   lat/lng and the mode (most frequent) city/state per prefix.
 
-### Power BI report
+---
+
+## 📊 Power BI Report
 
 3 pages, built manually in Power BI Desktop against the 4 gold tables via
-the Databricks connector (Import mode):
+the Databricks connector (Import mode). 9 DAX measures span the 4 gold
+tables: `Total Revenue`, `Total Orders`, `Avg Order Value`,
+`On-Time Delivery Rate`, `Avg Delivery Delta (Days)`, `Total Seller Revenue`,
+`Avg Seller Review Score`, `Customer Count`, `Avg Customer Monetary Value`.
+Full spec in `specs/03-powerbi-model.md`.
 
-1. **Executive KPI Dashboard** — total revenue, total orders, avg order
-   value, on-time delivery rate; revenue-over-time line chart; date/state
-   slicers.
-2. **Regional & Seller Performance** — revenue by state; top-sellers table
-   with review scores; delivery delta by state.
-3. **Customer Segmentation (RFM)** — recency/frequency/monetary scatter
-   plot; customer counts and avg monetary value by `rfm_segment`.
+### 1. Executive KPI Dashboard
 
-9 DAX measures across the 4 gold tables: `Total Revenue`, `Total Orders`,
-`Avg Order Value`, `On-Time Delivery Rate`, `Avg Delivery Delta (Days)`,
-`Total Seller Revenue`, `Avg Seller Review Score`, `Customer Count`,
-`Avg Customer Monetary Value`. Full spec in `specs/03-powerbi-model.md`.
+Total revenue, total orders, avg order value, and on-time delivery rate as
+card visuals, plus a revenue-over-time line chart with date/state slicers.
 
-### Claude RAG assistant
+![Executive KPI Dashboard](docs/screenshot-kpi-dashboard.png)
+
+*Executive KPI Dashboard — headline metrics and the revenue trend across
+the full order history, including the December 2017 spike.*
+
+### 2. Regional & Seller Performance
+
+A top-sellers table with revenue and review scores, alongside a
+revenue-by-state bar chart.
+
+![Regional & Seller Performance](docs/screenshot-regional-seller.png)
+
+*Regional & Seller Performance — seller leaderboard on the left, revenue
+by customer state on the right (São Paulo dominates).*
+
+### 3. Customer Segmentation (RFM)
+
+A recency/frequency/monetary scatter plot, plus customer counts and avg
+monetary value by `rfm_segment`.
+
+![Customer Segmentation (RFM)](docs/screenshot-customer-segmentation.png)
+
+*Customer Segmentation — RFM scatter plot (bubble size = monetary value)
+alongside segment-level counts and averages.*
+
+---
+
+## 🤖 RAG Assistant
 
 Two-part scope, covering both the original data-dictionary use case and
 the business-metrics questions originally intended for the abandoned
@@ -173,7 +180,7 @@ rather than a single lookup.
 
 ---
 
-## Repo structure
+## 📁 Repo Structure
 
 ```
 specs/       One markdown spec per phase, written before code.
@@ -191,7 +198,9 @@ README.md    This file.
 
 ---
 
-## Running the RAG assistant locally
+## 🚀 Getting Started
+
+Running the RAG assistant locally.
 
 **Requirements**: Python 3.11+, an `ANTHROPIC_API_KEY` with an active
 credit balance.
@@ -221,7 +230,7 @@ pip install --force-reinstall --no-cache-dir anthropic pydantic scikit-learn
 
 ---
 
-## Example questions this project can answer
+## 💡 Example Questions This Project Can Answer
 
 **"Which regions actually drive our revenue?"** — São Paulo alone accounts
 for roughly 37% of total revenue despite being one of 27 states with
@@ -247,3 +256,31 @@ dictionary's caveat about order-level (not item-level) review attribution
 on multi-seller orders explains why, and the RAG assistant connects both
 facts when asked about the relationship rather than just returning a
 top-10 table.
+
+---
+
+## ⚠️ Pivots & Lessons Learned
+
+This project didn't go exactly as planned — and that's worth documenting
+honestly rather than glossing over. Both pivots below are the kind of
+infrastructure constraint a real project runs into; the point of
+documenting them here is the adaptation, not treating them as failures.
+
+**Microsoft Fabric → Databricks Free Edition.** The original plan used
+Microsoft Fabric for the lakehouse layer. Workspace creation was blocked by
+a tenant-level restriction on the Microsoft account available for this
+project. Rather than wait on IT approval outside the project's control,
+the platform was swapped for Databricks Free Edition + Unity Catalog,
+which offers an equivalent medallion-architecture Delta Lake setup with no
+tenant dependency.
+
+**Copilot Studio agent → folded into the Claude RAG assistant.** The
+original plan included a Microsoft Copilot Studio agent connected to the
+Power BI semantic model as the "conversational agent" deliverable.
+Connecting it hit a second tenant-level licensing block: the Power BI
+knowledge-source connector never appeared in the agent's knowledge-source
+list, and the file-upload fallback failed with "User license not found."
+Rather than lose that deliverable, its scope — answering business-metrics
+questions grounded in the data — was folded into a Claude API + RAG
+assistant instead, which also picked up data-dictionary Q&A as a second
+capability. See `specs/04-copilot-studio-agent.md` for the full account.
